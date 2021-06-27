@@ -1,12 +1,13 @@
 #include "Utility.h"
 #include "GameManager.h"
-#include <glm/glm.hpp>
+#include "Agent.h"
+#include "AgentManager.h"
 
 void ShowConsoleCursor(bool showFlag);
 
 void ExecutePrints(bool _clearPrint = true);
 
-int FixedUpdate();
+int FixedUpdate(float deltaTime);
 void Draw();
 
 void SendPrint(PrintString _ps);
@@ -20,7 +21,6 @@ void GotoXY(int x, int y);
 std::vector<PrintString> toClear;
 std::vector<PrintString> toPrint;
 
-
 void ShowConsoleCursor(bool showFlag)
 {
 	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -33,6 +33,7 @@ void ShowConsoleCursor(bool showFlag)
 }
 
 int main() {
+	srand(time(0));
 
 	//Creating Different Windows
 	sf::RenderWindow window(sf::VideoMode(800, 800), "Steering Behaviours - By Keane Carotenuto");
@@ -48,12 +49,17 @@ int main() {
 	//FixedUpdate() call rate
 	float step = (1.0f / 60.0f);
 
-	sf::RectangleShape* test = new sf::RectangleShape();
-	test->setPosition(sf::Vector2f(700, 700));
-	test->setFillColor(sf::Color::Red);
-	test->setSize(sf::Vector2f(10, 10));
+	sf::Texture* texture_agent =  new sf::Texture();
+	//Loads textures for sprites
+	if (!texture_agent->loadFromFile("Resources/Agent.png", sf::IntRect(0, 0, 32, 32)))
+	{
+		std::cout << "ERROR: Failed to load sprite";
+	}
 
-	Game::toDraw.push_back(test);
+
+	for (int i = 0; i < 10; i++) {
+		AgentManager::AddAgent(new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, Game::wind, texture_agent));
+	}
 
 	while (window.isOpen() == true)
 	{
@@ -66,7 +72,7 @@ int main() {
 			ExecutePrints();
 
 			//Main Loop of Game
-			if (FixedUpdate() == 0) return 0;
+			if (FixedUpdate(stepTime) == 0) return 0;
 
 			stepTime -= step;
 			drawn = false;
@@ -117,29 +123,21 @@ void ExecutePrints(bool _clearPrint)
 	if (_clearPrint) toPrint.clear();
 }
 
-int FixedUpdate() {
-	sf::RectangleShape* theRect = dynamic_cast<sf::RectangleShape*>(Game::toDraw[0]);
+int FixedUpdate(float deltaTime) {
+	std::map<std::string, Agent*>::iterator it;
+	for (it = AgentManager::allAgents.begin(); it != AgentManager::allAgents.end(); ++it) {
+		it->second->SetTarget(sf::Vector2f(util::mousePos));
+	}
 
-	SendPrint({ 5,5, std::to_string(util::mousePos.x) + ", " + std::to_string(util::mousePos.y), 15});
-
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-		theRect->setPosition(sf::Vector2f(theRect->getPosition().x - 1, theRect->getPosition().y));
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-		theRect->setPosition(sf::Vector2f(theRect->getPosition().x + 1, theRect->getPosition().y));
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		theRect->setPosition(sf::Vector2f(theRect->getPosition().x, theRect->getPosition().y - 1));
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		theRect->setPosition(sf::Vector2f(theRect->getPosition().x, theRect->getPosition().y + 1));
-	}
+	AgentManager::UpdateAll(deltaTime);
 
 	return 1;
 }
 
 void Draw() {
 	Game::wind->clear();
+
+	AgentManager::RenderAll();
 
 	for (sf::Drawable* item : Game::toDraw)
 	{

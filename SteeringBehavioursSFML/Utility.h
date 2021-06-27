@@ -7,8 +7,21 @@
 #include <time.h>
 #include <string>
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtx/vector_angle.hpp>
+
 
 namespace util {
+	static glm::vec2 v2(sf::Vector2f _v) {
+		glm::vec2 toRet{ _v.x, _v.y };
+		return toRet;
+	}
+
+	static sf::Vector2f v2(glm::vec2 _v) {
+		sf::Vector2f toRet{ _v.x, _v.y };
+		return toRet;
+	}
+
 	//Width and height of window
 	const int windowWidth = 800;
 	const int windowHeight = 800;
@@ -16,6 +29,18 @@ namespace util {
 	static sf::Vector2i mousePos = sf::Vector2i();
 
 	static float CurrentTime = 0.0f;
+
+	static sf::Vector2f normalize(sf::Vector2f _vec) {
+		return v2(glm::normalize(v2(_vec)));
+	}
+
+	static float length(sf::Vector2f _vec) {
+		return glm::length(v2(_vec));
+	}
+
+	static float angle(sf::Vector2f _vec1, sf::Vector2f _vec2) {
+		return glm::degrees(glm::angle(glm::normalize(v2(_vec1)), glm::normalize(v2(_vec2))));
+	}
 }
 
 struct PrintString {
