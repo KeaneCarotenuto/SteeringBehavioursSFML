@@ -8,7 +8,10 @@
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/closest_point.hpp>
+
 
 
 namespace util {
@@ -41,9 +44,21 @@ namespace util {
 	static float angle(sf::Vector2f _vec1, sf::Vector2f _vec2) {
 		return glm::degrees(glm::angle(glm::normalize(v2(_vec1)), glm::normalize(v2(_vec2))));
 	}
+	
+	static sf::Vector2f rotate(sf::Vector2f _vec, float _degrees) {
+		return v2(glm::rotate(v2(_vec), glm::radians<float>(_degrees)));
+	}
+	
+	static sf::Vector2f closestPoint(sf::Vector2f _point, sf::Vector2f _lineStart, sf::Vector2f _lineEnd) {
+		return v2(glm::closestPointOnLine<float>(v2(_point), v2(_lineStart), v2(_lineEnd)));
+	}
 
 	static float distance(sf::Vector2f _vec1, sf::Vector2f _vec2) {
 		return glm::distance(v2(_vec1), v2(_vec2));
+	}
+
+	static float random() {
+		return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 	}
 }
 

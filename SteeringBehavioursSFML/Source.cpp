@@ -1,7 +1,7 @@
 #include "Utility.h"
 #include "GameManager.h"
 #include "Agent.h"
-#include "AgentManager.h"
+//#include "AgentManager.h"
 
 void ShowConsoleCursor(bool showFlag);
 
@@ -58,7 +58,14 @@ int main() {
 
 
 	for (int i = 0; i < 10; i++) {
-		AgentManager::AddAgent(new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, Game::wind, texture_agent));
+		Agent* _agent = new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, Game::wind, texture_agent);
+
+		if (_agent->GetName() == "a0") {
+			_agent->SetMaxVel(200);
+			_agent->SetMaxAcc(200);
+		}
+
+		Agent::AddAgent(_agent);
 	}
 
 	while (window.isOpen() == true)
@@ -130,17 +137,17 @@ int FixedUpdate(float deltaTime) {
 	sf::Vector2f mouseVel = (sf::Vector2f)(oldMouse - util::mousePos);
 
 	std::map<std::string, Agent*>::iterator it;
-	for (it = AgentManager::allAgents.begin(); it != AgentManager::allAgents.end(); ++it) {
+	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
 		if (it->second->GetName() == "a0") {
-			it->second->SetTarget({ {400,-20}, {0,0}, 0 });
+			it->second->SetTarget({ (sf::Vector2f)util::mousePos, {0,0}, 0 });
 			continue;
 		}
-		it->second->SetTarget({ AgentManager::allAgents["a0"]->GetPos() , AgentManager::allAgents["a0"]->GetVel() , 0 });
+		it->second->SetTarget({ Agent::allAgents["a0"]->GetPos() , Agent::allAgents["a0"]->GetVel() , 0 });
 	}
 
 	
 
-	AgentManager::UpdateAll(deltaTime);
+	Agent::UpdateAll(deltaTime);
 
 	return 1;
 }
@@ -148,7 +155,7 @@ int FixedUpdate(float deltaTime) {
 void Draw() {
 	Game::wind->clear();
 
-	AgentManager::RenderAll();
+	Agent::RenderAll();
 
 	for (sf::Drawable* item : Game::toDraw)
 	{

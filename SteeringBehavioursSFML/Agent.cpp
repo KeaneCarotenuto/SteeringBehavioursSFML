@@ -1,4 +1,26 @@
 #include "Agent.h"
+std::map<std::string, Agent*> Agent::allAgents;
+
+void Agent::AddAgent(Agent* _agent)
+{
+	allAgents[_agent->GetName()] = _agent;
+}
+
+void Agent::UpdateAll(float deltaTime)
+{
+	std::map<std::string, Agent*>::iterator it;
+	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
+		it->second->Update(deltaTime);
+	}
+}
+
+void Agent::RenderAll()
+{
+	std::map<std::string, Agent*>::iterator it;
+	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
+		it->second->Render();
+	}
+}
 
 Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, float _maxAcc, sf::RenderWindow* _window, sf::Texture* _texture)
 {
@@ -11,7 +33,7 @@ Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, f
 	window = _window;
 	texture = _texture;
 	sprite.setTexture(*texture);
-	sprite.setOrigin(16,16);
+	sprite.setOrigin(16, 16);
 }
 
 sf::Vector2f Agent::Seek()
@@ -41,6 +63,15 @@ sf::Vector2f Agent::Flee()
 	return desiredVel;
 }
 
+sf::Vector2f Agent::Evade()
+{
+	sf::Vector2f desiredVel = util::normalize(m_position - m_target.m_position - m_target.m_velocity) * m_maxAcceleration;
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
 sf::Vector2f Agent::Arrive()
 {
 	sf::Vector2f offset = m_target.m_position - m_position;
@@ -58,9 +89,37 @@ sf::Vector2f Agent::Arrive()
 	return desiredVel;
 }
 
+sf::Vector2f Agent::Wander()
+{
+	float _circleDistance = 100;
+	float _circleRad = 100;
+
+	sf::Vector2f circleCenter = util::normalize(m_velocity) * _circleDistance;
+
+	sf::Vector2f displacementForce = sf::Vector2f(0, 1) * _circleRad;
+
+	m_wanderAngle += (util::random() * 2 - 1) * m_wanderAngleChange;
+
+	displacementForce = util::rotate(displacementForce, m_wanderAngle);
+
+	return displacementForce;
+}
+
+sf::Vector2f Agent::ColAvoid()
+{
+	sf::Vector2f displacementForce;
+
+	return displacementForce;
+}
+
 void Agent::Update(float deltaTime)
 {
-	m_acceleration = Pursue();
+	
+
+	if (m_name == "a0") m_acceleration = Seek();
+	else {
+		m_acceleration = Wander();
+	}
 
 	if (util::length(m_acceleration) > m_maxAcceleration)
 	{
