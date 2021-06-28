@@ -99,6 +99,8 @@ public:
 
 	sf::Vector2f ColAvoid();
 
+	void Collisions();
+
 	void Update(float deltaTime);
 
 	void Render();

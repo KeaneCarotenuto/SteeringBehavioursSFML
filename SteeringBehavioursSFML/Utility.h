@@ -48,6 +48,10 @@ namespace util {
 	static sf::Vector2f rotate(sf::Vector2f _vec, float _degrees) {
 		return v2(glm::rotate(v2(_vec), glm::radians<float>(_degrees)));
 	}
+
+	static sf::Vector2f reflect(sf::Vector2f _vec, sf::Vector2f _norm) {
+		return v2(glm::reflect(v2(_vec), v2(_norm)));
+	}
 	
 	static sf::Vector2f closestPoint(sf::Vector2f _point, sf::Vector2f _lineStart, sf::Vector2f _lineEnd) {
 		return v2(glm::closestPointOnLine<float>(v2(_point), v2(_lineStart), v2(_lineEnd)));

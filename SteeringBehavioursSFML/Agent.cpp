@@ -145,6 +145,23 @@ sf::Vector2f Agent::ColAvoid()
 	return (laterallForce + brakingForce);
 }
 
+void Agent::Collisions() {
+	std::map<std::string, Obstacle*>::iterator it;
+	for (it = Agent::allObstacles.begin(); it != Agent::allObstacles.end(); ++it) {
+		sf::Vector2f outwardsVec = util::normalize(m_position - it->second->m_position) * it->second->m_radius;
+
+		float distance = util::distance(m_position, it->second->m_position);
+
+		if (distance <= it->second->m_radius) {
+			if (util::angle(m_velocity, outwardsVec) > 90) {
+				m_velocity = util::reflect(m_velocity, util::normalize(outwardsVec));
+			}
+		}
+
+		
+	}
+}
+
 void Agent::Update(float deltaTime)
 {
 	
@@ -169,6 +186,8 @@ void Agent::Update(float deltaTime)
 		m_velocity = util::normalize(m_velocity);
 		m_velocity *= m_maxVelocity;
 	}
+
+	Collisions();
 
 	m_position += m_velocity * deltaTime;
 

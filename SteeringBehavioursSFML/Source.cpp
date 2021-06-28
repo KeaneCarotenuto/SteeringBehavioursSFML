@@ -68,7 +68,8 @@ int main() {
 		Agent::AddAgent(_agent);
 	}
 
-	Agent::AddObstacle(new Obstacle("e", sf::Vector2f(400, 400), 100));
+	Agent::AddObstacle(new Obstacle("o1", sf::Vector2f(400, 400), 100));
+	Agent::AddObstacle(new Obstacle("o2", sf::Vector2f(500, 400), 100));
 
 	while (window.isOpen() == true)
 	{
