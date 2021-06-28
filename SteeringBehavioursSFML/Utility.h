@@ -41,6 +41,10 @@ namespace util {
 	static float angle(sf::Vector2f _vec1, sf::Vector2f _vec2) {
 		return glm::degrees(glm::angle(glm::normalize(v2(_vec1)), glm::normalize(v2(_vec2))));
 	}
+
+	static float distance(sf::Vector2f _vec1, sf::Vector2f _vec2) {
+		return glm::distance(v2(_vec1), v2(_vec2));
+	}
 }
 
 struct PrintString {

@@ -101,7 +101,7 @@ int main() {
 			}
 
 			if (newEvent.type == sf::Event::MouseMoved) {
-				util::mousePos = sf::Mouse::getPosition(window);
+				
 			}
 		}
 	}
@@ -124,10 +124,21 @@ void ExecutePrints(bool _clearPrint)
 }
 
 int FixedUpdate(float deltaTime) {
+	sf::Vector2i oldMouse = util::mousePos;
+	util::mousePos = sf::Mouse::getPosition(*Game::wind);
+
+	sf::Vector2f mouseVel = (sf::Vector2f)(oldMouse - util::mousePos);
+
 	std::map<std::string, Agent*>::iterator it;
 	for (it = AgentManager::allAgents.begin(); it != AgentManager::allAgents.end(); ++it) {
-		it->second->SetTarget(sf::Vector2f(util::mousePos));
+		if (it->second->GetName() == "a0") {
+			it->second->SetTarget({ {400,-20}, {0,0}, 0 });
+			continue;
+		}
+		it->second->SetTarget({ AgentManager::allAgents["a0"]->GetPos() , AgentManager::allAgents["a0"]->GetVel() , 0 });
 	}
+
+	
 
 	AgentManager::UpdateAll(deltaTime);
 

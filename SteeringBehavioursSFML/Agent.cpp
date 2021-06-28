@@ -16,7 +16,16 @@ Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, f
 
 sf::Vector2f Agent::Seek()
 {
-	sf::Vector2f desiredVel = util::normalize(m_targetPos - m_position) * m_maxAcceleration;
+	sf::Vector2f desiredVel = util::normalize(m_target.m_position - m_position) * m_maxAcceleration;
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
+sf::Vector2f Agent::Pursue()
+{
+	sf::Vector2f desiredVel = util::normalize(m_target.m_position - m_position + m_target.m_velocity) * m_maxAcceleration;
 
 	desiredVel = desiredVel - m_velocity;
 
@@ -25,7 +34,24 @@ sf::Vector2f Agent::Seek()
 
 sf::Vector2f Agent::Flee()
 {
-	sf::Vector2f desiredVel = util::normalize(m_position - m_targetPos) * m_maxAcceleration;
+	sf::Vector2f desiredVel = util::normalize(m_position - m_target.m_position) * m_maxAcceleration;
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
+sf::Vector2f Agent::Arrive()
+{
+	sf::Vector2f offset = m_target.m_position - m_position;
+
+	float distance = util::length(offset);
+
+	float rampedSpeed = m_maxVelocity * (distance / m_target.m_slowingDistance);
+
+	float clampedSpeed = std::min(rampedSpeed, m_maxVelocity);
+
+	sf::Vector2f desiredVel = (clampedSpeed / distance) * offset;
 
 	desiredVel = desiredVel - m_velocity;
 
@@ -34,7 +60,7 @@ sf::Vector2f Agent::Flee()
 
 void Agent::Update(float deltaTime)
 {
-	m_acceleration = Seek();
+	m_acceleration = Pursue();
 
 	if (util::length(m_acceleration) > m_maxAcceleration)
 	{
@@ -51,6 +77,11 @@ void Agent::Update(float deltaTime)
 	}
 
 	m_position += m_velocity * deltaTime;
+
+	if (m_position.x > util::windowWidth) m_position.x = 0;
+	if (m_position.x < 0) m_position.x = util::windowWidth;
+	if (m_position.y > util::windowHeight) m_position.y = 0;
+	if (m_position.y < 0) m_position.y = util::windowHeight;
 }
 
 void Agent::Render()
