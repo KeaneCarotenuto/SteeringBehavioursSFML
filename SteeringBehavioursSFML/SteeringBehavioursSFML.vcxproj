@@ -146,13 +146,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Agent.cpp" />
-    <ClCompile Include="AgentManager.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Agent.h" />
-    <ClInclude Include="AgentManager.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>

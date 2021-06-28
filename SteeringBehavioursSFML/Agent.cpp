@@ -1,9 +1,17 @@
 #include "Agent.h"
 std::map<std::string, Agent*> Agent::allAgents;
+std::map<std::string, Obstacle*> Agent::allObstacles;
+
+sf::RenderWindow* Agent::mainWindow;
 
 void Agent::AddAgent(Agent* _agent)
 {
 	allAgents[_agent->GetName()] = _agent;
+}
+
+void Agent::AddObstacle(Obstacle* _obstacle)
+{
+	allObstacles[_obstacle->m_name] = _obstacle;
 }
 
 void Agent::UpdateAll(float deltaTime)
@@ -16,13 +24,24 @@ void Agent::UpdateAll(float deltaTime)
 
 void Agent::RenderAll()
 {
-	std::map<std::string, Agent*>::iterator it;
-	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
-		it->second->Render();
+	std::map<std::string, Agent*>::iterator itAgents;
+	for (itAgents = Agent::allAgents.begin(); itAgents != Agent::allAgents.end(); ++itAgents) {
+		itAgents->second->Render();
+	}
+
+
+	std::map<std::string, Obstacle*>::iterator itObs;
+	for (itObs = Agent::allObstacles.begin(); itObs != Agent::allObstacles.end(); ++itObs) {
+		sf::CircleShape shape(itObs->second->m_radius);
+		shape.setOrigin(itObs->second->m_radius, itObs->second->m_radius);
+		shape.setPosition(itObs->second->m_position);
+		shape.setFillColor(sf::Color(255, 163, 72));
+
+		mainWindow->draw(shape);
 	}
 }
 
-Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, float _maxAcc, sf::RenderWindow* _window, sf::Texture* _texture)
+Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, float _maxAcc, sf::Texture* _texture)
 {
 	m_name = _name;
 	m_position = _pos;
@@ -30,7 +49,6 @@ Agent::Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, f
 	m_maxVelocity = _maxVel;
 	m_maxAcceleration = _maxAcc;
 
-	window = _window;
 	texture = _texture;
 	sprite.setTexture(*texture);
 	sprite.setOrigin(16, 16);
@@ -107,9 +125,24 @@ sf::Vector2f Agent::Wander()
 
 sf::Vector2f Agent::ColAvoid()
 {
-	sf::Vector2f displacementForce;
+	sf::Vector2f laterallForce;
+	sf::Vector2f brakingForce;
 
-	return displacementForce;
+	std::map<std::string, Obstacle*>::iterator it;
+	for (it = Agent::allObstacles.begin(); it != Agent::allObstacles.end(); ++it) {
+		float distToOb = util::distance(m_position, it->second->m_position);
+		if (distToOb <= (util::length(m_velocity) + it->second->m_radius)) {
+			sf::Vector2f closestPoint = util::closestPoint(it->second->m_position, m_position, m_position + m_velocity);
+
+			float distToClosestPoint = util::distance(closestPoint, it->second->m_position);
+			if (distToClosestPoint < it->second->m_radius + sprite.getGlobalBounds().width) {
+				laterallForce =  util::normalize(closestPoint - it->second->m_position) * (1.0f / distToOb) * it->second->m_radius * 1000.0f;
+				brakingForce = util::normalize(m_velocity) * (1.0f/distToOb) * it->second->m_radius * 1000.0f;
+			}
+		}
+	}
+
+	return (laterallForce + brakingForce);
 }
 
 void Agent::Update(float deltaTime)
@@ -120,6 +153,8 @@ void Agent::Update(float deltaTime)
 	else {
 		m_acceleration = Wander();
 	}
+
+	m_acceleration += ColAvoid();
 
 	if (util::length(m_acceleration) > m_maxAcceleration)
 	{
@@ -150,15 +185,15 @@ void Agent::Render()
 	lines[0].color = sf::Color::Red;
 	lines[1].position = m_position + m_velocity;
 	lines[1].color = sf::Color::Red;
-	window->draw(lines);
+	mainWindow->draw(lines);
 
 	lines[0].position = m_position;
 	lines[0].color = sf::Color::Blue;
 	lines[1].position = m_position + m_acceleration;
 	lines[1].color = sf::Color::Blue;
-	window->draw(lines);
+	mainWindow->draw(lines);
 
 	sprite.setPosition(m_position);
 	sprite.setRotation(-atan2(m_velocity.x, m_velocity.y) * 180.0f / glm::pi<float>() + 180);
-	window->draw(sprite);
+	mainWindow->draw(sprite);
 }

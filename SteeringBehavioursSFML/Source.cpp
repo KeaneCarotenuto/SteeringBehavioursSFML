@@ -1,7 +1,6 @@
 #include "Utility.h"
 #include "GameManager.h"
 #include "Agent.h"
-//#include "AgentManager.h"
 
 void ShowConsoleCursor(bool showFlag);
 
@@ -56,9 +55,10 @@ int main() {
 		std::cout << "ERROR: Failed to load sprite";
 	}
 
+	Agent::mainWindow = Game::wind;
 
 	for (int i = 0; i < 10; i++) {
-		Agent* _agent = new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, Game::wind, texture_agent);
+		Agent* _agent = new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, texture_agent);
 
 		if (_agent->GetName() == "a0") {
 			_agent->SetMaxVel(200);
@@ -67,6 +67,8 @@ int main() {
 
 		Agent::AddAgent(_agent);
 	}
+
+	Agent::AddObstacle(new Obstacle("e", sf::Vector2f(400, 400), 100));
 
 	while (window.isOpen() == true)
 	{
