@@ -2,9 +2,48 @@
 #include "Utility.h"
 
 struct Target {
+	Target(std::string _name, sf::Vector2f _pos, sf::Vector2f _vel, float _slowingDist) {
+		m_name = _name;
+		m_position = _pos;
+		m_velocity = _vel;
+		m_slowingDistance = _slowingDist;
+	}
+
+	Target(std::string _name, sf::Vector2f _pos, sf::Vector2f _vel, float _slowingDist, Target* _prev, Target* _next) {
+		m_name = _name;
+		m_position = _pos;
+		m_velocity = _vel;
+		m_slowingDistance = _slowingDist;
+	}
+
+	std::string m_name = "";
+
 	sf::Vector2f m_position;
 	sf::Vector2f m_velocity;
 	float m_slowingDistance;
+
+	Target* prevTarget = nullptr;
+	Target* nextTarget = nullptr;
+};
+
+struct Path {
+	Path(std::string _name, bool _doesLoop = true) {
+		m_name = _name;
+		m_loops = _doesLoop;
+	}
+
+	std::string m_name = "";
+
+	Target* startTarget = nullptr;
+	Target* endTarget = nullptr;
+
+	Target* GetClosestTarget(sf::Vector2f _point);
+
+	bool m_loops = true;
+
+	static std::map<std::string, Target*> allTargets;
+
+	static void AddToPath(Path* _path, sf::Vector2f _pos, float _slowingDist);
 };
 
 struct Obstacle {
@@ -30,7 +69,7 @@ private:
 	sf::Vector2f m_velocity;
 	sf::Vector2f m_acceleration;
 
-	Target m_target;
+	Target* m_target = nullptr;
 
 	float m_mass = 1;
 
@@ -49,20 +88,28 @@ public:
 	//Static class things, uses for management
 	static std::map<std::string, Agent*> allAgents;
 	static std::map<std::string, Obstacle*> allObstacles;
+	static std::map<std::string, Target*> allTargets;
+	static std::map<std::string, Path*> allPaths;
 
 	static sf::RenderWindow* mainWindow;
 
 	static void AddAgent(Agent* _agent);
 	static void AddObstacle(Obstacle* _obstacle);
+	static void AddTarget(Target* _target);
+	static void AddPath(Path* _path);
 
 	static void UpdateAll(float deltaTime);
 	static void RenderAll();
 
+	static std::vector<Agent*> GetAllInRad(sf::Vector2f _pos, float _rad);
 
 
 	Agent(std::string _name, sf::Vector2f _pos, float _mass, float _maxVel, float _maxAcc, sf::Texture* _texture);
 
-	void SetTarget(Target _target) {
+	Target* GetTarget() {
+		return m_target;
+	}
+	void SetTarget(Target* _target) {
 		m_target = _target;
 	}
 
@@ -86,6 +133,8 @@ public:
 	}
 
 	sf::Vector2f Seek();
+
+	sf::Vector2f PathFollow();
 
 	sf::Vector2f Pursue();
 

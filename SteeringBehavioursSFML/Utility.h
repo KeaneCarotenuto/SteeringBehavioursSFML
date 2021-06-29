@@ -15,6 +15,16 @@
 
 
 namespace util {
+	//Width and height of window
+	const int windowWidth = 800;
+	const int windowHeight = 800;
+
+	static sf::Vector2i mousePos = sf::Vector2i();
+
+	static float CurrentTime = 0.0f;
+	
+	extern bool debugMode;
+
 	static glm::vec2 v2(sf::Vector2f _v) {
 		glm::vec2 toRet{ _v.x, _v.y };
 		return toRet;
@@ -24,14 +34,6 @@ namespace util {
 		sf::Vector2f toRet{ _v.x, _v.y };
 		return toRet;
 	}
-
-	//Width and height of window
-	const int windowWidth = 800;
-	const int windowHeight = 800;
-
-	static sf::Vector2i mousePos = sf::Vector2i();
-
-	static float CurrentTime = 0.0f;
 
 	static sf::Vector2f normalize(sf::Vector2f _vec) {
 		return v2(glm::normalize(v2(_vec)));

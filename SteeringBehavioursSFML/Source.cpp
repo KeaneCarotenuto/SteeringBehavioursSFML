@@ -2,6 +2,8 @@
 #include "GameManager.h"
 #include "Agent.h"
 
+bool util::debugMode = false;
+
 void ShowConsoleCursor(bool showFlag);
 
 void ExecutePrints(bool _clearPrint = true);
@@ -32,6 +34,7 @@ void ShowConsoleCursor(bool showFlag)
 }
 
 int main() {
+
 	srand(time(0));
 
 	//Creating Different Windows
@@ -68,8 +71,13 @@ int main() {
 		Agent::AddAgent(_agent);
 	}
 
-	Agent::AddObstacle(new Obstacle("o1", sf::Vector2f(400, 400), 100));
-	Agent::AddObstacle(new Obstacle("o2", sf::Vector2f(500, 400), 100));
+	Agent::AddObstacle(new Obstacle("o0", sf::Vector2f(rand() % 800, rand() % 800), rand() % 100 + 50));
+
+	Agent::AddTarget(new Target("a0", Agent::allAgents["a0"]->GetPos(), Agent::allAgents["a0"]->GetVel(), 0));
+	Agent::AddTarget(new Target("mouse", (sf::Vector2f)util::mousePos, sf::Vector2f(0,0), 0));
+
+	Agent::AddPath(new Path("p0"));
+
 
 	while (window.isOpen() == true)
 	{
@@ -110,8 +118,29 @@ int main() {
 				window.close();
 			}
 
-			if (newEvent.type == sf::Event::MouseMoved) {
-				
+			if (newEvent.type == sf::Event::KeyPressed) {
+				if (newEvent.key.code == sf::Keyboard::Key::Tab) {
+					util::debugMode = !util::debugMode;
+				}
+
+				if (newEvent.key.code == sf::Keyboard::Key::A) {
+
+					Agent* _agent = new Agent("a" + std::to_string(Agent::allAgents.size()), (sf::Vector2f)util::mousePos, 1, rand() % 50 + 50, rand() % 50 + 50, texture_agent);
+
+					Agent::AddAgent(_agent);
+
+				}
+				else if (newEvent.key.code == sf::Keyboard::Key::O) {
+
+					Obstacle* _obst = new Obstacle("o" + std::to_string(Agent::allObstacles.size()), (sf::Vector2f)util::mousePos, rand() % 100 + 10);
+
+					Agent::AddObstacle(_obst);
+
+				}
+				else if (newEvent.key.code == sf::Keyboard::Key::P) {
+
+					Path::AddToPath(Agent::allPaths["p0"], (sf::Vector2f)util::mousePos, 0);
+				}
 			}
 		}
 	}
@@ -134,21 +163,24 @@ void ExecutePrints(bool _clearPrint)
 }
 
 int FixedUpdate(float deltaTime) {
-	sf::Vector2i oldMouse = util::mousePos;
 	util::mousePos = sf::Mouse::getPosition(*Game::wind);
-
-	sf::Vector2f mouseVel = (sf::Vector2f)(oldMouse - util::mousePos);
+	util::mousePos.x = glm::clamp(util::mousePos.x, 0, util::windowWidth);
+	util::mousePos.y = glm::clamp(util::mousePos.y, 0, util::windowHeight);
+	
+	Agent::allTargets["mouse"]->m_position = (sf::Vector2f)util::mousePos;
+	Agent::allTargets["a0"]->m_position = Agent::allAgents["a0"]->GetPos();
+	Agent::allTargets["a0"]->m_velocity = Agent::allAgents["a0"]->GetVel();
 
 	std::map<std::string, Agent*>::iterator it;
 	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
 		if (it->second->GetName() == "a0") {
-			it->second->SetTarget({ (sf::Vector2f)util::mousePos, {0,0}, 0 });
+			it->second->SetTarget(Agent::allTargets["mouse"]);
 			continue;
 		}
-		it->second->SetTarget({ Agent::allAgents["a0"]->GetPos() , Agent::allAgents["a0"]->GetVel() , 0 });
+		if (it->second->GetTarget() == nullptr) {
+			it->second->SetTarget(Agent::allPaths["p0"]->GetClosestTarget(it->second->GetPos()));
+		}
 	}
-
-	
 
 	Agent::UpdateAll(deltaTime);
 
