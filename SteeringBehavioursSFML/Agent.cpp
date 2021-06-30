@@ -345,7 +345,7 @@ sf::Vector2f Agent::GroupPathFollow() {
 	sf::Vector2f desiredVel = sf::Vector2f(0, 0);
 
 	desiredVel += PathFollow() * 2.0f;
-	desiredVel += Seperate();
+	desiredVel += Seperate() * 2.0f;
 	desiredVel += Cohesion();
 	desiredVel += Align();
 
