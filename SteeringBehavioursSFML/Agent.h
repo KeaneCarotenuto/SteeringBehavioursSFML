@@ -58,6 +58,21 @@ struct Obstacle {
 	float m_radius;
 };
 
+enum class SteeringType {
+	Seek,
+	Flee,
+	Pursue,
+	Evade,
+	Wander,
+	Arrival,
+	PathFollowing,
+	Flocking,
+	CrowdPathFollowing,
+
+	First = Seek,
+	Last = CrowdPathFollowing
+};
+
 class Agent
 {
 private:
@@ -93,13 +108,19 @@ public:
 
 	static sf::RenderWindow* mainWindow;
 
+	static SteeringType behaviour;
+
 	static void AddAgent(Agent* _agent);
 	static void AddObstacle(Obstacle* _obstacle);
 	static void AddTarget(Target* _target);
 	static void AddPath(Path* _path);
 
+	static void UpdateBehaviour(void _textUpdate(std::string) = nullptr);
+
 	static void UpdateAll(float deltaTime);
 	static void RenderAll();
+
+	static void DeleteAll();
 
 	static std::vector<Agent*> GetAllInRad(sf::Vector2f _pos, float _rad);
 
@@ -151,6 +172,8 @@ public:
 	sf::Vector2f Seperate();
 
 	sf::Vector2f Cohesion();
+
+	sf::Vector2f Flock();
 
 	sf::Vector2f GroupPathFollow();
 

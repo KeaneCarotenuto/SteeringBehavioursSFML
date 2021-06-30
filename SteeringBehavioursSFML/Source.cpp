@@ -6,6 +6,18 @@ bool util::debugMode = false;
 
 void ShowConsoleCursor(bool showFlag);
 
+int main();
+
+void SpawnBasics();
+
+void ToggleControls();
+
+void UpdateTypeText(std::string _newText);
+
+void PrevBehaviour();
+
+void NextBehaviour();
+
 void ExecutePrints(bool _clearPrint = true);
 
 int FixedUpdate(float deltaTime);
@@ -21,6 +33,12 @@ void GotoXY(int x, int y);
 
 std::vector<PrintString> toClear;
 std::vector<PrintString> toPrint;
+
+sf::Font pixelFont;
+sf::Text currentType;
+sf::Text instructions;
+
+sf::Texture* texture_agent = new sf::Texture();
 
 void ShowConsoleCursor(bool showFlag)
 {
@@ -51,7 +69,6 @@ int main() {
 	//FixedUpdate() call rate
 	float step = (1.0f / 60.0f);
 
-	sf::Texture* texture_agent =  new sf::Texture();
 	//Loads textures for sprites
 	if (!texture_agent->loadFromFile("Resources/Agent.png", sf::IntRect(0, 0, 32, 32)))
 	{
@@ -60,23 +77,32 @@ int main() {
 
 	Agent::mainWindow = Game::wind;
 
-	for (int i = 0; i < 10; i++) {
-		Agent* _agent = new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 50 + 50, rand() % 50 + 50, texture_agent);
+	SpawnBasics();
 
-		if (_agent->GetName() == "a0") {
-			_agent->SetMaxVel(200);
-			_agent->SetMaxAcc(200);
-		}
-
-		Agent::AddAgent(_agent);
+	if (!pixelFont.loadFromFile("Resources/pixelFont.ttf"))
+	{
+		std::cout << "ERROR: Failed to load font";
 	}
 
-	Agent::AddObstacle(new Obstacle("o0", sf::Vector2f(rand() % 800, rand() % 800), rand() % 100 + 50));
+	currentType.setFont(pixelFont);
+	currentType.setFillColor(sf::Color::White);
+	currentType.setOutlineColor(sf::Color::Black);
+	currentType.setOutlineThickness(5.0f);
+	currentType.setCharacterSize(30);
+	UpdateTypeText("SEEK");
+	currentType.setPosition(20, 20);
 
-	Agent::AddTarget(new Target("a0", Agent::allAgents["a0"]->GetPos(), Agent::allAgents["a0"]->GetVel(), 0));
-	Agent::AddTarget(new Target("mouse", (sf::Vector2f)util::mousePos, sf::Vector2f(0,0), 0));
-
-	Agent::AddPath(new Path("p0"));
+	instructions.setFont(pixelFont);
+	instructions.setFillColor(sf::Color::White);
+	instructions.setOutlineColor(sf::Color::Black);
+	instructions.setOutlineThickness(5.0f);
+	instructions.setCharacterSize(20);
+	instructions.setLineSpacing(1.5f);
+	instructions.setString(
+		"[C] TO OPEN AND CLOSE CONTROLS\n"\
+	);
+	instructions.setOrigin(0, instructions.getGlobalBounds().height);
+	instructions.setPosition(20, util::windowHeight - 10);
 
 
 	while (window.isOpen() == true)
@@ -123,9 +149,25 @@ int main() {
 					util::debugMode = !util::debugMode;
 				}
 
+				if (newEvent.key.code == sf::Keyboard::Key::LBracket) {
+					PrevBehaviour();
+				}
+				if (newEvent.key.code == sf::Keyboard::Key::RBracket) {
+					NextBehaviour();
+				}
+
+				if (newEvent.key.code == sf::Keyboard::Key::C) {
+					ToggleControls();
+				}
+
+				if (newEvent.key.code == sf::Keyboard::Key::R) {
+					Agent::DeleteAll();
+					SpawnBasics();
+				}
+
 				if (newEvent.key.code == sf::Keyboard::Key::A) {
 
-					Agent* _agent = new Agent("a" + std::to_string(Agent::allAgents.size()), (sf::Vector2f)util::mousePos, 1, rand() % 50 + 50, rand() % 50 + 50, texture_agent);
+					Agent* _agent = new Agent("a" + std::to_string(Agent::allAgents.size()), (sf::Vector2f)util::mousePos, 1, rand() % 100 + 50, rand() % 100 + 50, texture_agent);
 
 					Agent::AddAgent(_agent);
 
@@ -139,13 +181,89 @@ int main() {
 				}
 				else if (newEvent.key.code == sf::Keyboard::Key::P) {
 
-					Path::AddToPath(Agent::allPaths["p0"], (sf::Vector2f)util::mousePos, 0);
+					Path::AddToPath(Agent::allPaths["p0"], (sf::Vector2f)util::mousePos, 20);
 				}
 			}
 		}
 	}
 
 	return 0;
+}
+
+void SpawnBasics()
+{
+	for (int i = 0; i < 10; i++) {
+		Agent* _agent = new Agent("a" + std::to_string(i), { float(rand() % 800), float(rand() % 800) }, 1, rand() % 100 + 50, rand() % 100 + 50, texture_agent);
+
+		if (_agent->GetName() == "a0") {
+			_agent->SetMaxVel(200);
+			_agent->SetMaxAcc(200);
+		}
+
+		Agent::AddAgent(_agent);
+	}
+
+	Agent::AddObstacle(new Obstacle("o0", sf::Vector2f(rand() % 800, rand() % 800), rand() % 100 + 50));
+
+	Agent::AddTarget(new Target("a0", Agent::allAgents["a0"]->GetPos(), Agent::allAgents["a0"]->GetVel(), 20));
+	Agent::AddTarget(new Target("mouse", (sf::Vector2f)util::mousePos, sf::Vector2f(0, 0), 20));
+
+	Agent::allAgents["a0"]->SetTarget(Agent::allTargets["mouse"]);
+
+	Agent::AddPath(new Path("p0"));
+
+	Agent::UpdateBehaviour(UpdateTypeText);
+}
+
+void ToggleControls()
+{
+	if (instructions.getString().getSize() < 50) {
+		instructions.setString(
+			"[TAB] TO ENABLE/DISABLE DEBUG VIEW\n"\
+			"[A] TO SPAWN AGENT\n"\
+			"[O] TO SPAWN OBSTACLE\n"\
+			"[P] TO SPAWN NEW PATH POINT\n"\
+			"[LEFT SQUARE BRACKET] TO GO TO PREVIOUS BEHAVIOUR\n"\
+			"[RIGHT SQUARE BRACKET] TO GO TO NEXT BEHAVIOUR\n"\
+			"[R] TO RESTART\n"\
+			"[C] TO OPEN AND CLOSE CONTROLS\n"\
+		);
+	}
+	else {
+		instructions.setString(
+			"[C] TO OPEN AND CLOSE CONTROLS\n"\
+		);
+	}
+
+	instructions.setOrigin(0, instructions.getGlobalBounds().height);
+	instructions.setPosition(20, util::windowHeight - 10);
+
+	
+}
+
+void UpdateTypeText(std::string _newText)
+{
+	currentType.setString("MODE:\n" + _newText);
+}
+
+void PrevBehaviour() {
+	Agent::behaviour = static_cast<SteeringType>((int)Agent::behaviour - 1);
+
+	if (Agent::behaviour < SteeringType::First) {
+		Agent::behaviour = SteeringType::Last;
+	}
+
+	Agent::UpdateBehaviour(UpdateTypeText);
+}
+
+void NextBehaviour() {
+	Agent::behaviour = static_cast<SteeringType>((int)Agent::behaviour + 1);
+
+	if (Agent::behaviour > SteeringType::Last) {
+		Agent::behaviour = SteeringType::First;
+	}
+
+	Agent::UpdateBehaviour(UpdateTypeText);
 }
 
 void ExecutePrints(bool _clearPrint)
@@ -171,17 +289,6 @@ int FixedUpdate(float deltaTime) {
 	Agent::allTargets["a0"]->m_position = Agent::allAgents["a0"]->GetPos();
 	Agent::allTargets["a0"]->m_velocity = Agent::allAgents["a0"]->GetVel();
 
-	std::map<std::string, Agent*>::iterator it;
-	for (it = Agent::allAgents.begin(); it != Agent::allAgents.end(); ++it) {
-		if (it->second->GetName() == "a0") {
-			it->second->SetTarget(Agent::allTargets["mouse"]);
-			continue;
-		}
-		if (it->second->GetTarget() == nullptr) {
-			it->second->SetTarget(Agent::allPaths["p0"]->GetClosestTarget(it->second->GetPos()));
-		}
-	}
-
 	Agent::UpdateAll(deltaTime);
 
 	return 1;
@@ -196,6 +303,9 @@ void Draw() {
 	{
 		Game::wind->draw((*item));
 	}
+
+	Game::wind->draw(currentType);
+	Game::wind->draw(instructions);
 
 	//Update main window
 	Game::wind->display();
