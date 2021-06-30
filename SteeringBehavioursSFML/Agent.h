@@ -146,6 +146,12 @@ public:
 
 	sf::Vector2f Wander();
 
+	sf::Vector2f Align();
+
+	sf::Vector2f Seperate();
+
+	sf::Vector2f Cohesion();
+
 	sf::Vector2f ColAvoid();
 
 	void Collisions();

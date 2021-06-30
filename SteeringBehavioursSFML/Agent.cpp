@@ -240,6 +240,100 @@ sf::Vector2f Agent::Wander()
 	return displacementForce;
 }
 
+sf::Vector2f Agent::Align()
+{
+	std::vector<Agent*> nearby = GetAllInRad(m_position, 200);
+
+	sf::Vector2f averageVel = sf::Vector2f(0, 0);
+
+	for (Agent* _agent : nearby) {
+		if (_agent == this) continue;
+		averageVel += _agent->GetVel();
+	}
+
+	if (util::length(averageVel) <= 0.1f) {
+		return sf::Vector2f(0, 0);
+	}
+
+	averageVel *= 1.0f / (float)(nearby.size());
+
+	sf::Vector2f desiredVel = util::normalize(averageVel) * m_maxAcceleration;
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
+sf::Vector2f Agent::Seperate()
+{
+	std::vector<Agent*> nearby = GetAllInRad(m_position, 100);
+
+	sf::Vector2f averagePos = sf::Vector2f(0, 0);
+
+	for (Agent* _agent : nearby) {
+		if (_agent == this) continue;
+		averagePos += _agent->GetPos();
+	}
+
+	if (util::length(averagePos) <= 0.1f) {
+		return sf::Vector2f(0, 0);
+	}
+
+	averagePos *= 1.0f / (float)(nearby.size() - 1);
+
+	float distToAPos = util::distance(averagePos, m_position);
+
+	sf::Vector2f desiredVel = util::normalize(m_position - averagePos) * m_maxAcceleration / (distToAPos/100);
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
+sf::Vector2f Agent::Cohesion()
+{
+	std::vector<Agent*> nearby = GetAllInRad(m_position, 100);
+
+	sf::Vector2f averagePos = sf::Vector2f(0, 0);
+
+	std::map<std::string, int> possibleTargets;
+
+	for (Agent* _agent : nearby) {
+		if (_agent == this) continue;
+
+		if (_agent->m_target) possibleTargets[_agent->m_target->m_name]++;
+		averagePos += _agent->GetPos();
+	}
+
+	if (util::length(averagePos) <= 0.1f) {
+		return sf::Vector2f(0, 0);
+	}
+
+	std::pair<std::string, int> _mostPop = {"",0};
+
+	std::map<std::string, int>::iterator it;
+	for (it = possibleTargets.begin(); it != possibleTargets.end(); ++it) {
+		if (it->second > _mostPop.second) {
+			_mostPop = *it;
+		}
+	}
+
+	if (_mostPop.first != "" && _mostPop.second != NULL && m_target && m_target->nextTarget && m_target->nextTarget->m_name == _mostPop.first) {
+		m_target = Agent::allTargets[_mostPop.first];
+	}
+	
+
+	averagePos *= 1.0f / (float)(nearby.size() - 1);
+
+	float distToAPos = util::distance(averagePos, m_position);
+
+	sf::Vector2f desiredVel = util::normalize(averagePos - m_position) * m_maxAcceleration * (distToAPos / 10);
+
+	desiredVel = desiredVel - m_velocity;
+
+	return desiredVel;
+}
+
 sf::Vector2f Agent::ColAvoid()
 {
 	sf::Vector2f laterallForce;
@@ -282,14 +376,20 @@ void Agent::Collisions() {
 
 void Agent::Update(float deltaTime)
 {
-	std::vector<Agent*> nearby = GetAllInRad(m_position, 400);
+	//std::vector<Agent*> nearby = GetAllInRad(m_position, 400);
 
 	if (m_name == "a0") m_acceleration = Seek();
 	else {
-		m_acceleration = PathFollow();
+		m_acceleration = PathFollow() * 2.0f;
+		//m_acceleration += Wander();
+		m_acceleration += Seperate();
+		m_acceleration += Cohesion();
+		m_acceleration += Align();
 	}
 
 	m_acceleration += ColAvoid();
+
+	
 
 	if (util::length(m_acceleration) > m_maxAcceleration)
 	{
@@ -313,6 +413,8 @@ void Agent::Update(float deltaTime)
 	if (m_position.x < 0) m_position.x = util::windowWidth;
 	if (m_position.y > util::windowHeight) m_position.y = 0;
 	if (m_position.y < 0) m_position.y = util::windowHeight;
+
+	m_velocity *= 0.999f;
 }
 
 void Agent::Render()
