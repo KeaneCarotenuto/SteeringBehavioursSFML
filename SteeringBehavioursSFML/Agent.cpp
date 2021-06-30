@@ -268,22 +268,27 @@ sf::Vector2f Agent::Seperate()
 {
 	std::vector<Agent*> nearby = GetAllInRad(m_position, 100);
 
-	sf::Vector2f averagePos = sf::Vector2f(0, 0);
+	int nbc = nearby.size();
+
+	sf::Vector2f averageDiff = sf::Vector2f(0, 0);
 
 	for (Agent* _agent : nearby) {
 		if (_agent == this) continue;
-		averagePos += _agent->GetPos();
+
+		float d = util::distance(m_position, _agent->m_position);
+
+		sf::Vector2f diff = util::normalize(m_position - _agent->m_position) / d;
+
+		averageDiff += diff;
 	}
 
-	if (util::length(averagePos) <= 0.1f) {
+	if (util::length(averageDiff) <= 0.001f) {
 		return sf::Vector2f(0, 0);
 	}
 
-	averagePos *= 1.0f / (float)(nearby.size() - 1);
+	averageDiff /= (float)(nearby.size() - 1);
 
-	float distToAPos = util::distance(averagePos, m_position);
-
-	sf::Vector2f desiredVel = util::normalize(m_position - averagePos) * m_maxAcceleration / (distToAPos/100);
+	sf::Vector2f desiredVel = util::normalize(averageDiff) * m_maxAcceleration;
 
 	desiredVel = desiredVel - m_velocity;
 
@@ -311,7 +316,7 @@ sf::Vector2f Agent::Cohesion()
 
 	float distToAPos = util::distance(averagePos, m_position);
 
-	sf::Vector2f desiredVel = util::normalize(averagePos - m_position) * m_maxAcceleration * (distToAPos / 10);
+	sf::Vector2f desiredVel = util::normalize(averagePos - m_position) * m_maxAcceleration * (distToAPos / 20);
 
 	desiredVel = desiredVel - m_velocity;
 
