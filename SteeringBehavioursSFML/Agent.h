@@ -152,6 +152,8 @@ public:
 
 	sf::Vector2f Cohesion();
 
+	sf::Vector2f GroupPathFollow();
+
 	sf::Vector2f ColAvoid();
 
 	void Collisions();
